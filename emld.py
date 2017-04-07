@@ -123,7 +123,7 @@ def run(user, hashes, passwd, share, output, ltarget):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Elysium-Security Mass Dump tool', conflict_handler='resolve')
+    parser = argparse.ArgumentParser(description='Elysium-Security Mass lsass Dump tool', conflict_handler='resolve')
 
     parser.add_argument('-L', '--list', dest='list', help='Targets file (nmap format)', required=False, default="")
     parser.add_argument('-U', '--user', dest='user', help='User', required=True)
